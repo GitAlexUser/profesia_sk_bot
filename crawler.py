@@ -1,7 +1,10 @@
 import argparse
 import configparser
 import json
+import csv
 import os.path
+
+from datetime import datetime
 from time import sleep
 
 from selenium import webdriver
@@ -15,6 +18,7 @@ import redis
 
 
 def searcher(search_keyword, save_to_redis, redis_param):
+    start_time = datetime.now()
 
     # webdriver initial
     driver = webdriver.Chrome(service=ChromiumService(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install()))
@@ -108,6 +112,25 @@ def searcher(search_keyword, save_to_redis, redis_param):
                     else:
                         stop_iter = False
                         break
+            else:
+                # File to save data
+                file_name = str(start_time.date()) + " " + search_keyword + ".csv"
+                field_names = [
+                    "offer_id",
+                    "offer_link",
+                    "employer",
+                    "job_title",
+                    "job_location",
+                    "salary",
+                    "info"
+                ]
+                if not os.path.isfile(file_name):
+                    with open(file_name, "w", newline='') as csv_file:
+                        writer = csv.DictWriter(csv_file, fieldnames=field_names)
+                        writer.writeheader()
+                with open(file_name, "a", newline='') as csv_file:
+                    writer = csv.DictWriter(csv_file, fieldnames=field_names)
+                    writer.writerow(data_line)
 
         # touch navigation buttons
         b = ActionChains(driver)
